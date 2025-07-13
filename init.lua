@@ -51,6 +51,8 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
 -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
 
+vim.keymap.set('n', '<C-p>', '<cmd>NeovimProjectDiscover<CR>', { desc = 'Open project picker' })
+
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
@@ -135,6 +137,9 @@ require('lazy').setup({
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
+    config = function()
+      require('which-key').setup {}
+    end,
   },
 
   { -- Fuzzy Finder (files, lsp, etc)
@@ -430,14 +435,18 @@ require('lazy').setup({
     },
   },
 
-  { -- You can easily change to a different colorscheme.
-    'sainnhe/everforest',
+  {
+    'neanias/everforest-nvim',
+    version = false,
     lazy = false,
-    priority = 1000,
+    priority = 1000, -- make sure to load this before all the other start plugins
     config = function()
       ---@diagnostic disable-next-line: missing-fields
-      vim.g.everforest_background = 'hard'
-      vim.cmd.colorscheme 'everforest'
+      require('everforest').setup {
+        background = 'hard',
+        transparent_background_level = 2,
+        vim.cmd.colorscheme 'everforest',
+      }
     end,
   },
 
@@ -456,6 +465,7 @@ require('lazy').setup({
       end
     end,
   },
+
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
@@ -473,23 +483,80 @@ require('lazy').setup({
     },
   },
 
+  -- NOTE: These are the plugins I added myself, call them myplugs
   {
     'stevearc/oil.nvim',
     ---@module 'oil'
     ---@type oil.SetupOpts
     opts = {},
-    -- Optional dependencies
     dependencies = { { 'echasnovski/mini.icons', opts = {} } },
-    -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
-    -- Lazy loading is not recommended because it is very tricky to make it work correctly in all situations.
     lazy = false,
+    config = function()
+      require('oil').setup {
+        default_file_explorer = true,
+      }
+    end,
   },
-  { 'akinsho/toggleterm.nvim', version = '*', config = true },
+
+  {
+    'akinsho/toggleterm.nvim',
+    config = function()
+      require('toggleterm').setup {
+        open_mapping = [[<c- >]],
+        direction = 'float',
+      }
+    end,
+  },
+
+  {
+    'nvimdev/dashboard-nvim',
+    event = 'VimEnter',
+    config = function()
+      require('dashboard').setup {}
+    end,
+    dependencies = { { 'nvim-tree/nvim-web-devicons' } },
+  },
+
+  --  {
+  --    'coffebar/neovim-project',
+  --    opts = {
+  --      projects = { -- define project roots
+  --        '~/projects/*',
+  --        '~/.config/*',
+  --      },
+  --      picker = {
+  --        type = 'telescope', -- one of "telescope", "fzf-lua", or "snacks"
+  --      },
+  --    },
+  --    init = function()
+  --      vim.opt.sessionoptions:append 'globals' -- save global variables that start with an uppercase letter and contain at least one lowercase letter.
+  --    end,
+  --    dependencies = {
+  --      { 'nvim-lua/plenary.nvim' },
+  --      { 'nvim-telescope/telescope.nvim', tag = '0.1.4' },
+  --      { 'Shatur/neovim-session-manager' },
+  --    },
+  --    lazy = false,
+  --    priority = 100,
+  --  },
+
+  {
+    'rmagatti/auto-session',
+    lazy = false,
+
+    ---enables autocomplete for opts
+    ---@module "auto-session"
+    ---@type AutoSession.Config
+    opts = {
+      suppressed_dirs = { '~/', '~/Projects', '~/Downloads', '/' },
+      -- log_level = 'debug',
+    },
+  },
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {
   ui = {
     icons = vim.g.have_nerd_font and {} or {
